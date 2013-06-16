@@ -193,17 +193,23 @@ module Dazeus
       success
     end
 
-    def run
+    def once
+      handle_event conn.receive
+    end
 
+    def run
       loop do
         break if conn.closed?
-        handle_event conn.receive
+        once
       end
     end
+    alias_method :start, :run
 
-    def stop
+    def close
       conn.close
     end
+    alias_method :stop, :close
+
 
     private
       def send_receive(message)
