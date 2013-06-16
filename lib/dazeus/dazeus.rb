@@ -71,7 +71,7 @@ module Dazeus
         unsubscribe &fn
       end
       subscribe('NAMES', &fn)
-      send_names(network, nick)
+      send_names(network, channel)
     end
 
     def send_whois(network, nick)
