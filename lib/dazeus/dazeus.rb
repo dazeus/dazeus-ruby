@@ -68,7 +68,7 @@ module Dazeus
     def names(network, channel, &block)
       fn = lambda do |response|
         block.call(response)
-        unsubscribe &fn
+        unsubscribe('NAMES', &fn)
       end
       subscribe('NAMES', &fn)
       send_names(network, channel)
@@ -82,7 +82,7 @@ module Dazeus
     def whois(network, nick, &block)
       fn = lambda do |response|
         block.call(response)
-        unsubscribe &fn
+        unsubscribe('WHOIS', &fn)
       end
       subscribe('WHOIS', &fn)
       send_whois(network, nick)
@@ -194,9 +194,15 @@ module Dazeus
     end
 
     def run
+
       loop do
+        break if conn.closed?
         handle_event conn.receive
       end
+    end
+
+    def stop
+      conn.close
     end
 
     private
@@ -204,9 +210,12 @@ module Dazeus
         conn.send message
         response = nil
         loop do
+          break if conn.closed?
           response = conn.receive
           break unless handle_event response
         end
+
+        return {} if response == nil
         response
       end
 

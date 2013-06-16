@@ -9,7 +9,11 @@ module Dazeus
     end
 
     def send(message)
-      @socket.sendmsg(dazeusify message)
+      if !@socket.closed?
+        @socket.sendmsg(dazeusify message)
+      else
+        false
+      end
     end
 
     def receive
@@ -19,20 +23,35 @@ module Dazeus
         message = message.strip
 
         while message.length > 0
-          digits = ""
-          while message[0] =~ /\d/
-            digits += message.slice! 0
-          end
-          @cache.push JSON.parse(message.slice!(0, digits.to_i))
-          message = message.strip
+          message = dezeusify(message)
         end
       end
       @cache.shift
     end
 
+    def dezeusify(message)
+      digits = ""
+      while message[0] =~ /\d/
+        digits += message.slice! 0
+      end
+      current = message.slice!(0, digits.to_i)
+      # puts "<- " + current
+      @cache.push JSON.parse(current)
+      message.strip
+    end
+
     def dazeusify(message)
       msg = JSON.dump(message)
+      # puts "-> " + msg
       msg.bytesize.to_s + msg
+    end
+
+    def close
+      @socket.close
+    end
+
+    def closed?
+      @socket.closed?
     end
 
     private
