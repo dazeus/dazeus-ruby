@@ -67,11 +67,27 @@ module Dazeus
 
     def names(network, channel, &block)
       fn = lambda do |response|
-        block.call(response)
         unsubscribe('NAMES', &fn)
+        block.call(response)
       end
       subscribe('NAMES', &fn)
       send_names(network, channel)
+    end
+
+    def names_sync(network, channel)
+      resolved = false
+      result = nil
+      names(network, channel) do |names|
+        resolved = true
+        result = names
+      end
+
+      # Wait for the names request to be resolved
+      loop do
+        break if resolved
+        once
+      end
+      result
     end
 
     def send_whois(network, nick)
@@ -86,6 +102,22 @@ module Dazeus
       end
       subscribe('WHOIS', &fn)
       send_whois(network, nick)
+    end
+
+    def whois_sync(network, nick)
+      resolved = false
+      result = nil
+      whois(network, nick) do |whois|
+        resolved = true
+        result = whois
+      end
+
+      # Wait for the whois request to be resolved
+      loop do
+        break if resolved
+        once
+      end
+      result
     end
 
     def join(network, channel)
